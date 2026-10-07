@@ -157,6 +157,16 @@ a:hover {
   img {
     width: 32px;
   }
+
+  .logo-wrapper--github {
+    margin-left: auto;
+    color: var(--black);
+
+    &:hover {
+      color: var(--stone-500);
+      background: initial;
+    }
+  }
 }
 
 .container {
