@@ -320,6 +320,10 @@ dialog {
   color: var(--stone-500);
 }
 
+.word-break-all {
+  word-break: break-all;
+}
+
 .golink-table--filter {
   margin-bottom: var(--3);
 }
