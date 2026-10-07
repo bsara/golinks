@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "golinks",
-  "homepage_url": "https://github.com/jkulton/golinks",
-  "version": "0.4.0",
+  "homepage_url": "https://github.com/bsara/golinks",
+  "version": "1.0.0",
   "description": "golinks in your browser",
   "icons": {
     "16": "images/icon.png",
