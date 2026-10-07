@@ -6,50 +6,49 @@ document.addEventListener('DOMContentLoaded', function () {
     const table = document.querySelector('.golink-table tbody');
     const siteFooter = document.querySelector('.site-footer');
     const golinkCountLabel = document.querySelector('.golink-home--count');
-    const remoteForm = document.querySelector('form#remote-golinks');
-    const remoteURLInput = remoteForm.querySelector('input[name="url"]');
-    const remoteStatus = remoteForm.querySelector('.remote-golinks--status');
-    const remoteView = remoteForm.querySelector('.remote-golinks--view');
-    const remoteLink = remoteForm.querySelector('.remote-golinks--link');
-    const remoteReloadLink = remoteForm.querySelector('.remote-golinks--reload');
-    const remoteEditLink = remoteForm.querySelector('.remote-golinks--edit');
-    const remoteDeleteLink = remoteForm.querySelector('.remote-golinks--delete');
-    const remoteInputSection = remoteForm.querySelector('.remote-golinks--input');
-    const remoteCancelLink = remoteForm.querySelector('.remote-golinks--cancel');
-    const remoteSkipHeaderCheckbox = remoteForm.querySelector('input[name="skipHeader"]');
-    const remoteOptions = remoteForm.querySelector('.remote-golinks--options');
-    const remoteConfigureCreateButton = remoteForm.querySelector('.remote-golinks--configure-create');
-    const remoteCreateDialog = document.querySelector('.remote-create-dialog');
-    const remoteCreateForm = remoteCreateDialog.querySelector('form#remote-create');
-    const remoteCreateURLTemplateInput = remoteCreateForm.querySelector('input[name="urlTemplate"]');
-    const remoteCreateOnUnknownCheckbox = remoteCreateForm.querySelector('input[name="createOnUnknown"]');
-    const remoteCreateCancelLink = remoteCreateForm.querySelector('.remote-create-dialog--cancel');
-    const remoteCreateDeleteButton = remoteCreateForm.querySelector('.remote-create-dialog--delete');
+    const sharedForm = document.querySelector('form#shared-golinks');
+    const sharedURLInput = sharedForm.querySelector('input[name="url"]');
+    const sharedStatus = sharedForm.querySelector('.shared-golinks--status');
+    const sharedView = sharedForm.querySelector('.shared-golinks--view');
+    const sharedLink = sharedForm.querySelector('.shared-golinks--link');
+    const sharedReloadLink = sharedForm.querySelector('.shared-golinks--reload');
+    const sharedEditLink = sharedForm.querySelector('.shared-golinks--edit');
+    const sharedDeleteLink = sharedForm.querySelector('.shared-golinks--delete');
+    const sharedInputSection = sharedForm.querySelector('.shared-golinks--input');
+    const sharedCancelLink = sharedForm.querySelector('.shared-golinks--cancel');
+    const sharedSkipHeaderCheckbox = sharedForm.querySelector('input[name="skipHeader"]');
+    const sharedConfigureCreateButton = sharedForm.querySelector('.shared-golinks--configure-create');
+    const sharedCreateDialog = document.querySelector('.shared-create-dialog');
+    const sharedCreateForm = sharedCreateDialog.querySelector('form#shared-create');
+    const sharedCreateURLTemplateInput = sharedCreateForm.querySelector('input[name="urlTemplate"]');
+    const sharedCreateOnUnknownCheckbox = sharedCreateForm.querySelector('input[name="createOnUnknown"]');
+    const sharedCreateCancelLink = sharedCreateForm.querySelector('.shared-create-dialog--cancel');
+    const sharedCreateDeleteButton = sharedCreateForm.querySelector('.shared-create-dialog--delete');
     const exportLink = document.querySelector('.golink-home--export');
-    const exportRemoteLinks = document.querySelector('.golink-home--export-remote');
-    let savedRemoteURL = '';
+    const exportSharedLinks = document.querySelector('.golink-home--export-shared');
+    let savedSharedURL = '';
     
     async function rerenderTable() {
         table.querySelectorAll('.golink-row').forEach(row => row.remove());
 
-        const { golinks, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
+        const { golinks, sharedGolinks = {} } = await chrome.storage.local.get(["golinks", "sharedGolinks"]);
         const localEntries = Object.entries(golinks || {}).map(([key, value]) => [key, value, false]);
-        const remoteEntries = Object.entries(remoteGolinks).map(([key, value]) => [key, value, true]);
+        const sharedEntries = Object.entries(sharedGolinks).map(([key, value]) => [key, value, true]);
 
-        // Alphabetical by name; a local golink comes before the remote golink it overrides
-        const entries = [...localEntries, ...remoteEntries]
-            .sort(([keyA, , isRemoteA], [keyB, , isRemoteB]) => keyA.localeCompare(keyB) || isRemoteA - isRemoteB);
+        // Alphabetical by name; a local golink comes before the shared golink it overrides
+        const entries = [...localEntries, ...sharedEntries]
+            .sort(([keyA, , isSharedA], [keyB, , isSharedB]) => keyA.localeCompare(keyB) || isSharedA - isSharedB);
 
-        const totalGolinkCount = Object.keys({ ...remoteGolinks, ...golinks }).length;
+        const totalGolinkCount = Object.keys({ ...sharedGolinks, ...golinks }).length;
         golinkCountLabel.textContent = `${totalGolinkCount} link${totalGolinkCount === 1 ? '' : 's'}`;
 
-        for (let [key, value, isRemote] of entries) {
+        for (let [key, value, isShared] of entries) {
             const row = table.insertRow();
             row.className = 'golink-row';
 
             const nameCell = row.insertCell();
             nameCell.textContent = key;
-            if (isRemote && Object.hasOwn(golinks || {}, key)) {
+            if (isShared && Object.hasOwn(golinks || {}, key)) {
                 row.classList.add('golink-row--overridden');
                 row.title = 'Overridden';
             }
@@ -65,11 +64,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const actionsCell = row.insertCell();
             actionsCell.className = 'nowrap';
 
-            if (isRemote) {
-                const remoteLabel = document.createElement('span');
-                remoteLabel.className = 'golink-row--remote';
-                remoteLabel.textContent = 'remote';
-                actionsCell.appendChild(remoteLabel);
+            if (isShared) {
+                const sharedLabel = document.createElement('span');
+                sharedLabel.className = 'golink-row--shared';
+                sharedLabel.textContent = 'shared';
+                actionsCell.appendChild(sharedLabel);
                 continue;
             }
 
@@ -142,18 +141,18 @@ document.addEventListener('DOMContentLoaded', function () {
         siteFooter.appendChild(footerHelpLink);
     }
 
-    async function renderRemoteStatus() {
-        const { remoteGolinksURL, remoteGolinks, remoteGolinksError } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinks", "remoteGolinksError"]);
-        remoteStatus.classList.toggle('remote-golinks--status-error', Boolean(remoteGolinksURL && remoteGolinksError));
-        if (!remoteGolinksURL) {
-            remoteStatus.textContent = '';
-        } else if (remoteGolinksError) {
-            remoteStatus.textContent = `Failed to load remote golinks: ${remoteGolinksError}`;
-        } else if (remoteGolinks === undefined) {
-            remoteStatus.textContent = 'Loading remote golinks...';
+    async function renderSharedStatus() {
+        const { sharedGolinksURL, sharedGolinks, sharedGolinksError } = await chrome.storage.local.get(["sharedGolinksURL", "sharedGolinks", "sharedGolinksError"]);
+        sharedStatus.classList.toggle('shared-golinks--status-error', Boolean(sharedGolinksURL && sharedGolinksError));
+        if (!sharedGolinksURL) {
+            sharedStatus.textContent = '';
+        } else if (sharedGolinksError) {
+            sharedStatus.textContent = `Failed to load shared golinks: ${sharedGolinksError}`;
+        } else if (sharedGolinks === undefined) {
+            sharedStatus.textContent = 'Loading shared golinks...';
         } else {
-            const remoteGolinkCount = Object.keys(remoteGolinks).length;
-            remoteStatus.textContent = `${remoteGolinkCount} remote link${remoteGolinkCount === 1 ? '' : 's'} loaded.`;
+            const sharedGolinkCount = Object.keys(sharedGolinks).length;
+            sharedStatus.textContent = `${sharedGolinkCount} shared link${sharedGolinkCount === 1 ? '' : 's'} loaded.`;
         }
     }
 
@@ -163,78 +162,78 @@ document.addEventListener('DOMContentLoaded', function () {
         return chrome.permissions.request(__helpers.toHostPermission(url)).catch(() => false);
     }
 
-    function renderRemoteForm(isEditing) {
-        const showView = savedRemoteURL && !isEditing;
-        remoteView.hidden = !showView;
-        remoteInputSection.hidden = showView;
-        remoteCancelLink.hidden = !savedRemoteURL;
-        remoteOptions.hidden = !savedRemoteURL;
-        exportLink.hidden = Boolean(savedRemoteURL);
-        exportRemoteLinks.hidden = !savedRemoteURL;
-        remoteLink.href = savedRemoteURL;
-        remoteLink.textContent = savedRemoteURL;
-        remoteURLInput.value = savedRemoteURL;
+    function renderSharedForm(isEditing) {
+        const showView = savedSharedURL && !isEditing;
+        sharedView.hidden = !showView;
+        sharedInputSection.hidden = showView;
+        sharedCancelLink.hidden = !savedSharedURL;
+        sharedConfigureCreateButton.hidden = !savedSharedURL;
+        exportLink.hidden = Boolean(savedSharedURL);
+        exportSharedLinks.hidden = !savedSharedURL;
+        sharedLink.href = savedSharedURL;
+        sharedLink.textContent = savedSharedURL;
+        sharedURLInput.value = savedSharedURL;
     }
 
-    async function renderRemoteConfigureCreateButton() {
-        const { remoteGolinksCreateURLTemplate } = await chrome.storage.local.get("remoteGolinksCreateURLTemplate");
-        remoteConfigureCreateButton.value = `${remoteGolinksCreateURLTemplate ? 'Configure' : 'Add'} Remote Link Creation`;
+    async function renderSharedConfigureCreateButton() {
+        const { sharedGolinksCreateURLTemplate } = await chrome.storage.local.get("sharedGolinksCreateURLTemplate");
+        sharedConfigureCreateButton.value = `${sharedGolinksCreateURLTemplate ? 'Configure' : 'Add'} Shared Link Creation`;
     }
 
-    async function initRemoteForm() {
-        const { remoteGolinksURL = '', remoteGolinksSkipHeader = false } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksSkipHeader"]);
-        savedRemoteURL = remoteGolinksURL;
-        remoteSkipHeaderCheckbox.checked = remoteGolinksSkipHeader;
-        remoteReloadLink.innerHTML = RELOAD_ICON;
-        remoteEditLink.innerHTML = EDIT_ICON;
-        remoteDeleteLink.innerHTML = DELETE_ICON;
-        renderRemoteForm(false);
-        renderRemoteStatus();
-        renderRemoteConfigureCreateButton();
+    async function initSharedForm() {
+        const { sharedGolinksURL = '', sharedGolinksSkipHeader = false } = await chrome.storage.local.get(["sharedGolinksURL", "sharedGolinksSkipHeader"]);
+        savedSharedURL = sharedGolinksURL;
+        sharedSkipHeaderCheckbox.checked = sharedGolinksSkipHeader;
+        sharedReloadLink.innerHTML = RELOAD_ICON;
+        sharedEditLink.innerHTML = EDIT_ICON;
+        sharedDeleteLink.innerHTML = DELETE_ICON;
+        renderSharedForm(false);
+        renderSharedStatus();
+        renderSharedConfigureCreateButton();
     }
 
-    remoteReloadLink.addEventListener('click', async (e) => {
+    sharedReloadLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        await requestHostPermission(savedRemoteURL);
-        remoteStatus.classList.remove('remote-golinks--status-error');
-        remoteStatus.textContent = 'Reloading remote golinks...';
-        await chrome.runtime.sendMessage({ type: 'refreshRemoteGolinks' });
-        // Unchanged remote golinks don't fire storage.onChanged, so the status is refreshed here
-        renderRemoteStatus();
+        await requestHostPermission(savedSharedURL);
+        sharedStatus.classList.remove('shared-golinks--status-error');
+        sharedStatus.textContent = 'Reloading shared golinks...';
+        await chrome.runtime.sendMessage({ type: 'refreshSharedGolinks' });
+        // Unchanged shared golinks don't fire storage.onChanged, so the status is refreshed here
+        renderSharedStatus();
     });
 
-    remoteSkipHeaderCheckbox.addEventListener('change', () => {
-        chrome.storage.local.set({ remoteGolinksSkipHeader: remoteSkipHeaderCheckbox.checked });
+    sharedSkipHeaderCheckbox.addEventListener('change', () => {
+        chrome.storage.local.set({ sharedGolinksSkipHeader: sharedSkipHeaderCheckbox.checked });
     });
 
-    remoteEditLink.addEventListener('click', (e) => {
+    sharedEditLink.addEventListener('click', (e) => {
         e.preventDefault();
-        renderRemoteForm(true);
-        remoteURLInput.focus();
+        renderSharedForm(true);
+        sharedURLInput.focus();
     });
 
-    remoteCancelLink.addEventListener('click', (e) => {
+    sharedCancelLink.addEventListener('click', (e) => {
         e.preventDefault();
-        renderRemoteForm(false);
+        renderSharedForm(false);
     });
 
-    remoteDeleteLink.addEventListener('click', async (e) => {
+    sharedDeleteLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        if (!confirm(`Delete remote CSV URL '${savedRemoteURL}'?`)) {
+        if (!confirm(`Delete shared CSV URL '${savedSharedURL}'?`)) {
             return;
         }
-        await chrome.storage.local.remove("remoteGolinksURL");
-        savedRemoteURL = '';
-        renderRemoteForm(false);
+        await chrome.storage.local.remove("sharedGolinksURL");
+        savedSharedURL = '';
+        renderSharedForm(false);
     });
 
-    remoteForm.addEventListener('submit', async (e) => {
+    sharedForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const value = remoteURLInput.value.trim();
+        const value = sharedURLInput.value.trim();
         if (!value) {
-            await chrome.storage.local.remove("remoteGolinksURL");
-            savedRemoteURL = '';
-            renderRemoteForm(false);
+            await chrome.storage.local.remove("sharedGolinksURL");
+            savedSharedURL = '';
+            renderSharedForm(false);
             return;
         }
         const url = __helpers.defaultToHTTPS(value);
@@ -244,62 +243,62 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         await requestHostPermission(url);
         // Saving the same URL again leaves storage unchanged, so no refresh is triggered
-        await chrome.storage.local.set({ remoteGolinksURL: url });
-        savedRemoteURL = url;
-        renderRemoteForm(false);
+        await chrome.storage.local.set({ sharedGolinksURL: url });
+        savedSharedURL = url;
+        renderSharedForm(false);
     });
 
-    remoteConfigureCreateButton.addEventListener('click', async () => {
-        const { remoteGolinksCreateURLTemplate = '', remoteGolinksCreateOnUnknown = false } = await chrome.storage.local.get(["remoteGolinksCreateURLTemplate", "remoteGolinksCreateOnUnknown"]);
-        remoteCreateURLTemplateInput.value = remoteGolinksCreateURLTemplate;
-        remoteCreateOnUnknownCheckbox.checked = remoteGolinksCreateOnUnknown;
-        remoteCreateDeleteButton.hidden = !remoteGolinksCreateURLTemplate;
-        remoteCreateDialog.showModal();
+    sharedConfigureCreateButton.addEventListener('click', async () => {
+        const { sharedGolinksCreateURLTemplate = '', sharedGolinksCreateOnUnknown = false } = await chrome.storage.local.get(["sharedGolinksCreateURLTemplate", "sharedGolinksCreateOnUnknown"]);
+        sharedCreateURLTemplateInput.value = sharedGolinksCreateURLTemplate;
+        sharedCreateOnUnknownCheckbox.checked = sharedGolinksCreateOnUnknown;
+        sharedCreateDeleteButton.hidden = !sharedGolinksCreateURLTemplate;
+        sharedCreateDialog.showModal();
     });
 
-    remoteCreateCancelLink.addEventListener('click', (e) => {
+    sharedCreateCancelLink.addEventListener('click', (e) => {
         e.preventDefault();
-        remoteCreateDialog.close();
+        sharedCreateDialog.close();
     });
 
-    remoteCreateDeleteButton.addEventListener('click', async () => {
-        if (!confirm('Delete remote link creation URL?')) {
+    sharedCreateDeleteButton.addEventListener('click', async () => {
+        if (!confirm('Delete shared link creation URL?')) {
             return;
         }
-        await chrome.storage.local.remove(["remoteGolinksCreateURLTemplate", "remoteGolinksCreateOnUnknown"]);
-        remoteCreateDialog.close();
+        await chrome.storage.local.remove(["sharedGolinksCreateURLTemplate", "sharedGolinksCreateOnUnknown"]);
+        sharedCreateDialog.close();
     });
 
-    remoteCreateForm.addEventListener('submit', async (e) => {
+    sharedCreateForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const urlTemplate = __helpers.defaultToHTTPS(remoteCreateURLTemplateInput.value.trim());
+        const urlTemplate = __helpers.defaultToHTTPS(sharedCreateURLTemplateInput.value.trim());
         if (!__helpers.isValidURL(__helpers.fillURLTemplate(urlTemplate, 'name', 'https://example.com'))) {
             alert('Invalid URL. Protocol required (http:// or https://)');
             return;
         }
         await chrome.storage.local.set({
-            remoteGolinksCreateURLTemplate: urlTemplate,
-            remoteGolinksCreateOnUnknown: remoteCreateOnUnknownCheckbox.checked,
+            sharedGolinksCreateURLTemplate: urlTemplate,
+            sharedGolinksCreateOnUnknown: sharedCreateOnUnknownCheckbox.checked,
         });
-        remoteCreateDialog.close();
+        sharedCreateDialog.close();
     });
 
     chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== 'local') {
             return;
         }
-        if (changes.remoteGolinks) {
+        if (changes.sharedGolinks) {
             rerenderTable();
         }
-        if (changes.remoteGolinksURL || changes.remoteGolinks || changes.remoteGolinksError) {
-            renderRemoteStatus();
+        if (changes.sharedGolinksURL || changes.sharedGolinks || changes.sharedGolinksError) {
+            renderSharedStatus();
         }
-        if (changes.remoteGolinksCreateURLTemplate) {
-            renderRemoteConfigureCreateButton();
+        if (changes.sharedGolinksCreateURLTemplate) {
+            renderSharedConfigureCreateButton();
         }
     });
 
     rerenderTable();
     renderSiteFooter();
-    initRemoteForm();
+    initSharedForm();
 });

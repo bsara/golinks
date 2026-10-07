@@ -2,13 +2,13 @@ import "./helpers/helpers.js";
 
 const GOLINKS_TEMPLATE = { "gh": "https://github.com" };
 const INDEX_GOLINK_NAMES = ["links", "/"];
-const REMOTE_REFRESH_ALARM = "refreshRemoteGolinks";
-const REMOTE_REFRESH_MINUTES = 60;
+const SHARED_REFRESH_ALARM = "refreshSharedGolinks";
+const SHARED_REFRESH_MINUTES = 60;
 const TRAILING_SLASHES = /\/+$/;
 const XML_SPECIAL_CHARS = /[&<>"']/g;
 
 chrome.runtime.onInstalled.addListener(async () => {
-  startRemoteRefresh();
+  startSharedRefresh();
   const { golinks } = await chrome.storage.local.get("golinks");
   if (golinks) {
     return;
@@ -18,12 +18,12 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 
-chrome.runtime.onStartup.addListener(() => startRemoteRefresh());
+chrome.runtime.onStartup.addListener(() => startSharedRefresh());
 
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === REMOTE_REFRESH_ALARM) {
-    refreshRemoteGolinks();
+  if (alarm.name === SHARED_REFRESH_ALARM) {
+    refreshSharedGolinks();
   }
 });
 
@@ -32,23 +32,23 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
   if (areaName !== "local") {
     return;
   }
-  if (changes.remoteGolinksSkipHeader && !changes.remoteGolinksURL) {
-    return refreshRemoteGolinks();
+  if (changes.sharedGolinksSkipHeader && !changes.sharedGolinksURL) {
+    return refreshSharedGolinks();
   }
-  if (!changes.remoteGolinksURL) {
+  if (!changes.sharedGolinksURL) {
     return;
   }
   // Drops the previous URL's golinks so they don't linger if the new URL fails
-  await chrome.storage.local.remove(["remoteGolinks", "remoteGolinksError"]);
-  refreshRemoteGolinks();
+  await chrome.storage.local.remove(["sharedGolinks", "sharedGolinksError"]);
+  refreshSharedGolinks();
 });
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type !== "refreshRemoteGolinks") {
+  if (message?.type !== "refreshSharedGolinks") {
     return;
   }
-  refreshRemoteGolinks().then(() => sendResponse());
+  refreshSharedGolinks().then(() => sendResponse());
   // Keeps the message channel open until sendResponse is called
   return true;
 });
@@ -86,8 +86,8 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   if (!name || INDEX_GOLINK_NAMES.includes(name)) {
     return navigate(chrome.runtime.getURL("pages/index.html"), disposition);
   }
-  const remoteCreateURL = await getRemoteCreateURL(name);
-  return navigate(remoteCreateURL || chrome.runtime.getURL(`pages/create.html?name=${encodeURIComponent(name)}`), disposition);
+  const sharedCreateURL = await getSharedCreateURL(name);
+  return navigate(sharedCreateURL || chrome.runtime.getURL(`pages/create.html?name=${encodeURIComponent(name)}`), disposition);
 });
 
 
@@ -139,19 +139,19 @@ function fuzzyMatch(query, name) {
   return { score, indices };
 }
 
-// Local golinks win over remote golinks with the same name
+// Local golinks win over shared golinks with the same name
 async function getGolinks() {
-  const { golinks = {}, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
-  return { ...remoteGolinks, ...golinks };
+  const { golinks = {}, sharedGolinks = {} } = await chrome.storage.local.get(["golinks", "sharedGolinks"]);
+  return { ...sharedGolinks, ...golinks };
 }
 
-// Matches the create page, which only allows remote link creation when a remote CSV URL is also set
-async function getRemoteCreateURL(name) {
-  const { remoteGolinksURL, remoteGolinksCreateURLTemplate, remoteGolinksCreateOnUnknown } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksCreateURLTemplate", "remoteGolinksCreateOnUnknown"]);
-  if (!remoteGolinksURL || !remoteGolinksCreateURLTemplate || !remoteGolinksCreateOnUnknown) {
+// Matches the create page, which only allows shared link creation when a shared CSV URL is also set
+async function getSharedCreateURL(name) {
+  const { sharedGolinksURL, sharedGolinksCreateURLTemplate, sharedGolinksCreateOnUnknown } = await chrome.storage.local.get(["sharedGolinksURL", "sharedGolinksCreateURLTemplate", "sharedGolinksCreateOnUnknown"]);
+  if (!sharedGolinksURL || !sharedGolinksCreateURLTemplate || !sharedGolinksCreateOnUnknown) {
     return null;
   }
-  return __helpers.fillURLTemplate(remoteGolinksCreateURLTemplate, name, '');
+  return __helpers.fillURLTemplate(sharedGolinksCreateURLTemplate, name, '');
 }
 
 function getDefaultDescription(text, golinks) {
@@ -196,26 +196,26 @@ function navigate(url, disposition) {
   return chrome.tabs.update({ url });
 }
 
-// Failed fetches keep the cached remote golinks and record the error for the options page
-async function refreshRemoteGolinks() {
-  const { remoteGolinksURL, remoteGolinksSkipHeader = false } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksSkipHeader"]);
-  if (!remoteGolinksURL) {
+// Failed fetches keep the cached shared golinks and record the error for the options page
+async function refreshSharedGolinks() {
+  const { sharedGolinksURL, sharedGolinksSkipHeader = false } = await chrome.storage.local.get(["sharedGolinksURL", "sharedGolinksSkipHeader"]);
+  if (!sharedGolinksURL) {
     return;
   }
 
   try {
     // Credentials are only sent with host permission; without it CORS applies, and servers that
     // allow any origin ("*") reject credentialed requests
-    const hasHostPermission = await chrome.permissions.contains(__helpers.toHostPermission(remoteGolinksURL));
-    const response = await fetch(remoteGolinksURL, { credentials: hasHostPermission ? "include" : "same-origin" });
+    const hasHostPermission = await chrome.permissions.contains(__helpers.toHostPermission(sharedGolinksURL));
+    const response = await fetch(sharedGolinksURL, { credentials: hasHostPermission ? "include" : "same-origin" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const remoteGolinks = __helpers.parseGolinksCSV(await response.text(), remoteGolinksSkipHeader);
-    await chrome.storage.local.set({ remoteGolinks });
-    await chrome.storage.local.remove("remoteGolinksError");
+    const sharedGolinks = __helpers.parseGolinksCSV(await response.text(), sharedGolinksSkipHeader);
+    await chrome.storage.local.set({ sharedGolinks });
+    await chrome.storage.local.remove("sharedGolinksError");
   } catch (error) {
-    await chrome.storage.local.set({ remoteGolinksError: error.message });
+    await chrome.storage.local.set({ sharedGolinksError: error.message });
   }
 }
 
@@ -241,8 +241,8 @@ function resolveGolinkURL(text, golinks) {
 }
 
 // Fires right away, then on an interval. Re-created on each start because Chrome may clear alarms on restart.
-function startRemoteRefresh() {
-  chrome.alarms.create(REMOTE_REFRESH_ALARM, { when: Date.now(), periodInMinutes: REMOTE_REFRESH_MINUTES });
+function startSharedRefresh() {
+  chrome.alarms.create(SHARED_REFRESH_ALARM, { when: Date.now(), periodInMinutes: SHARED_REFRESH_MINUTES });
 }
 
 // endregion

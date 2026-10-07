@@ -165,7 +165,7 @@ a:hover {
   padding: 0 var(--4);
 }
 
-.remote-golinks {
+.shared-golinks {
   margin-bottom: calc(var(--spacing) * 12);
 
   label {
@@ -173,7 +173,7 @@ a:hover {
     margin-bottom: var(--1);
   }
 
-  .remote-golinks--view {
+  .shared-golinks--view {
     display: flex;
     align-items: center;
     gap: var(--2);
@@ -184,7 +184,7 @@ a:hover {
     border-radius: var(--2);
     background: var(--white);
 
-    .remote-golinks--link {
+    .shared-golinks--link {
       flex: 1;
     }
 
@@ -193,20 +193,20 @@ a:hover {
     }
   }
 
-  .remote-golinks--input {
+  .shared-golinks--input {
     display: flex;
     align-items: center;
     gap: var(--2);
   }
 
-  .remote-golinks--options {
+  .shared-golinks--options {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin: var(--2) 0 0 0;
   }
 
-  .remote-golinks--skip-header {
+  .shared-golinks--skip-header {
     display: flex;
     align-items: center;
     gap: var(--2);
@@ -214,12 +214,12 @@ a:hover {
     font-weight: normal;
   }
 
-  .remote-golinks--status {
+  .shared-golinks--status {
     margin: var(--1) 0 0 0;
     color: var(--stone-500);
   }
 
-  .remote-golinks--status-error {
+  .shared-golinks--status-error {
     color: var(--red-600);
   }
 
@@ -239,13 +239,13 @@ dialog {
   background: var(--white);
 }
 
-.remote-create-dialog {
+.shared-create-dialog {
   label {
     display: block;
     margin-bottom: var(--1);
   }
 
-  .remote-create-dialog--delete {
+  .shared-create-dialog--delete {
     color: var(--white);
     background-color: var(--red-600);
     border-color: var(--red-600);
@@ -256,7 +256,7 @@ dialog {
     }
   }
 
-  .remote-create-dialog--create-on-unknown {
+  .shared-create-dialog--create-on-unknown {
     display: flex;
     align-items: center;
     gap: var(--2);
@@ -264,7 +264,7 @@ dialog {
     font-weight: normal;
   }
 
-  .remote-create-dialog--help {
+  .shared-create-dialog--help {
     color: var(--stone-500);
 
     &, * {
@@ -295,7 +295,7 @@ dialog {
   }
 }
 
-.golink-row--remote {
+.golink-row--shared {
   color: var(--stone-400);
 }
 

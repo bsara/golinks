@@ -9,16 +9,16 @@
 > - As you type, the omnibox suggests golinks by fuzzy match and shows the URL of each
 > - Text after a slash is appended to the golink's URL (`go gh/bsara/golinks` opens `https://github.com/bsara/golinks`)
 > - `go links` or `go /` opens the index
-> - Shared golinks can be loaded from a remote CSV URL, such as a Google Sheet. Personal golinks override remote ones with the same name
-> - New remote golinks can be created through a configurable URL template, from the create page or automatically for unknown `go` links
-> - Host permissions are optional. They are only requested for a remote CSV URL, so files that need you to be signed in can be loaded
+> - Shared golinks can be loaded from a CSV URL, such as a Google Sheet. Personal golinks override shared ones with the same name
+> - New shared golinks can be created through a configurable URL template, from the create page or automatically for unknown `go` links
+> - Host permissions are optional. They are only requested for a shared CSV URL, so files that need you to be signed in can be loaded
 
 golinks in your browser, without the need to modify DNS settings or run a server.
 
 This is an unpacked Chrome extension which leverages Chrome's [`omnibox`](https://developer.chrome.com/docs/extensions/reference/api/omnibox) API to function as an all-in-one golinks system for personal use.
 
 > [!IMPORTANT]  
-> golink data can be kept entirely **local**, using Chrome's [`storage.local`](https://developer.chrome.com/docs/extensions/reference/api/storage#storage_areas). Loading golinks from a remote CSV and creating links in it are optional.
+> golink data can be kept entirely **local**, using Chrome's [`storage.local`](https://developer.chrome.com/docs/extensions/reference/api/storage#storage_areas). Loading golinks from a shared CSV and creating links in it are optional.
 
 ### Installation
 
@@ -35,13 +35,13 @@ Type `go`, press <kbd>Space</kbd>, then type a name to search your golinks.
 
 <img src="/images/screenshot.png" />
 
-### Remote golinks
+### Shared golinks
 
-Load shared golinks from a CSV file at a URL, for example a team's Google Sheet.
+Load shared golinks from a CSV file at a URL, for example a team's Google Sheet or a GitHub Gist.
 
-<img src="/images/screenshot-remote-golinks.png" />
+<img src="/images/screenshot-shared-golinks.png" />
 
-1. On the index page, enter the URL in **Remote CSV URL** and click **Save**
+1. On the index page, enter the URL in **Shared CSV URL** and click **Save**
 2. When Chrome asks for access to the site, allow it if the file needs you to be signed in (such as a private Google Sheet)
 3. Select **Ignore the first line (header row)** if the file has a header
 
@@ -49,17 +49,17 @@ Each line of the CSV is `name,url`. Lines with an empty name or an invalid URL a
 
 For a Google Sheet, use its CSV export URL: `https://docs.google.com/spreadsheets/d/<sheet-id>/export?format=csv`
 
-Remote golinks reload when the browser starts and periodically after that. Click the reload icon next to the URL to reload them now.
+Shared golinks reload when the browser starts and periodically after that. Click the reload icon next to the URL to reload them now.
 
-On the index page, remote golinks are marked `remote`. A personal golink with the same name overrides the remote one.
+On the index page, shared golinks are marked `shared`. A personal golink with the same name overrides the shared one.
 
-### Remote link creation
+### Shared link creation
 
-Add new golinks to the remote CSV through a URL that you configure, for example a Google Form that adds rows to the sheet.
+Add new golinks to the shared CSV through a URL that you configure, for example a Google Form that adds rows to a shared Google Sheet.
 
-<img src="/images/screenshot-remote-link-creation.png" />
+<img src="/images/screenshot-shared-link-creation.png" />
 
-1. On the index page, click **Add Remote Link Creation**
+1. On the index page, click **Add Shared Link Creation**
 2. Enter a URL template and click **Save**
 
 The template can include these placeholders:
@@ -72,8 +72,8 @@ The template can include these placeholders:
 
 For example, `https://example.com/new?name={{name}}{{hasUrl:&url={{url}}}}`
 
-On the create page, click **Create Remote Link** to open the filled-in URL. The URL field is optional for remote links. The button is disabled until a remote CSV URL and a template are set.
+On the create page, click **Create Shared Link** to open the filled-in URL. The URL field is optional for shared links. The button is disabled until a shared CSV URL and a template are set.
 
-<img src="/images/screenshot-create-remote-link.png" />
+<img src="/images/screenshot-create-shared-link.png" />
 
-Select **Open this URL for unknown `go` links** to open the template URL, instead of the create page, when you enter a name that doesn't exist. This also needs a remote CSV URL to be set. Only `{{name}}` is filled in.
+Select **Open this URL for unknown `go` links** to open the template URL, instead of the create page, when you enter a name that doesn't exist. This also needs a shared CSV URL to be set. Only `{{name}}` is filled in.

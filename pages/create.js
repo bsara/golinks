@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.querySelector('form#create-edit');
     const nameInput = document.querySelector('input[name="name"]');
     const urlInput = document.querySelector('input[name="url"]');
-    const createRemoteButton = document.querySelector('#create-remote');
+    const createSharedButton = document.querySelector('#create-shared');
     
     // Alerts and returns null when the form is invalid
     function getValidatedFormValues({ isURLRequired = true } = {}) {
@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         const { name, url } = values;
-        const { golinks, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
+        const { golinks, sharedGolinks = {} } = await chrome.storage.local.get(["golinks", "sharedGolinks"]);
         if (Object.hasOwn(golinks || {}, name)) {
             alert(`A personal link named '${name}' already exists: ${golinks[name]}`);
             return;
         }
-        if (Object.hasOwn(remoteGolinks, name)
-            && !confirm(`A remote link named '${name}' already exists: ${remoteGolinks[name]}\n\nCreating this personal link will override it. Continue?`)) {
+        if (Object.hasOwn(sharedGolinks, name)
+            && !confirm(`A shared link named '${name}' already exists: ${sharedGolinks[name]}\n\nCreating this personal link will override it. Continue?`)) {
             return;
         }
         const newGolinks = { ...golinks, [name]: url };
@@ -62,28 +62,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function initCreateRemoteButton() {
-        const { remoteGolinksURL, remoteGolinksCreateURLTemplate } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksCreateURLTemplate"]);
-        if (!remoteGolinksURL) {
-            createRemoteButton.title = 'No remote CSV URL set';
-        } else if (!remoteGolinksCreateURLTemplate) {
-            createRemoteButton.title = 'Remote link creation not configured';
+    async function initCreateSharedButton() {
+        const { sharedGolinksURL, sharedGolinksCreateURLTemplate } = await chrome.storage.local.get(["sharedGolinksURL", "sharedGolinksCreateURLTemplate"]);
+        if (!sharedGolinksURL) {
+            createSharedButton.title = 'No shared CSV URL set';
+        } else if (!sharedGolinksCreateURLTemplate) {
+            createSharedButton.title = 'Shared link creation not configured';
         } else {
-            createRemoteButton.disabled = false;
+            createSharedButton.disabled = false;
         }
     }
 
-    async function createRemoteLink() {
+    async function createSharedLink() {
         const values = getValidatedFormValues({ isURLRequired: false });
         if (!values) {
             return;
         }
-        const { remoteGolinksCreateURLTemplate } = await chrome.storage.local.get("remoteGolinksCreateURLTemplate");
-        chrome.tabs.update({ url: __helpers.fillURLTemplate(remoteGolinksCreateURLTemplate, values.name, values.url) });
+        const { sharedGolinksCreateURLTemplate } = await chrome.storage.local.get("sharedGolinksCreateURLTemplate");
+        chrome.tabs.update({ url: __helpers.fillURLTemplate(sharedGolinksCreateURLTemplate, values.name, values.url) });
     }
 
     form.addEventListener('submit', submitForm);
-    createRemoteButton.addEventListener('click', createRemoteLink);
+    createSharedButton.addEventListener('click', createSharedLink);
     initForm();
-    initCreateRemoteButton();
+    initCreateSharedButton();
 });

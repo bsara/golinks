@@ -18,48 +18,48 @@
       </section>
     </section>
     <section class="container">
-      <form id="remote-golinks" class="remote-golinks">
-        <label for="remote-golinks-url">Remote CSV URL</label>
-        <section class="remote-golinks--view" hidden>
-          <a class="remote-golinks--link" target="_blank"></a>
-          <a href="#" class="golink-row--action remote-golinks--reload" title="Reload remote golinks" aria-label="Reload remote golinks"></a>
-          <a href="#" class="golink-row--action remote-golinks--edit" title="Edit remote CSV URL" aria-label="Edit remote CSV URL"></a>
-          <a href="#" class="golink-row--action remote-golinks--delete" title="Delete remote CSV URL" aria-label="Delete remote CSV URL"></a>
+      <form id="shared-golinks" class="shared-golinks">
+        <label for="shared-golinks-url">Shared CSV URL</label>
+        <section class="shared-golinks--view" hidden>
+          <a class="shared-golinks--link" target="_blank"></a>
+          <a href="#" class="golink-row--action shared-golinks--reload" title="Reload shared golinks" aria-label="Reload shared golinks"></a>
+          <a href="#" class="golink-row--action shared-golinks--edit" title="Edit shared CSV URL" aria-label="Edit shared CSV URL"></a>
+          <a href="#" class="golink-row--action shared-golinks--delete" title="Delete shared CSV URL" aria-label="Delete shared CSV URL"></a>
         </section>
-        <section class="remote-golinks--input">
-          <input placeholder="https://example.com/golinks.csv" type="text" name="url" id="remote-golinks-url" />
+        <section class="shared-golinks--input">
+          <input placeholder="https://example.com/golinks.csv" type="text" name="url" id="shared-golinks-url" />
           <input type="submit" value="Save" class="button" />
-          <a href="#" class="remote-golinks--cancel" hidden>Cancel</a>
+          <a href="#" class="shared-golinks--cancel" hidden>Cancel</a>
         </section>
-        <section class="remote-golinks--options" hidden>
-          <label class="remote-golinks--skip-header">
+        <section class="shared-golinks--options">
+          <label class="shared-golinks--skip-header">
             <input type="checkbox" name="skipHeader" />
             Ignore the first line (header row)
           </label>
-          <input type="button" value="Add Remote Link Creation" class="button remote-golinks--configure-create" />
+          <input type="button" value="Add Shared Link Creation" class="button shared-golinks--configure-create" hidden />
         </section>
-        <p class="remote-golinks--status"></p>
+        <p class="shared-golinks--status"></p>
       </form>
-      <dialog class="remote-create-dialog" closedby="any">
-        <form id="remote-create" method="dialog">
-          <label for="remote-create-url-template">Remote Link Creation URL Template</label>
-          <input placeholder="https://example.com/new?name={{name}}&amp;url={{url}}" type="text" name="urlTemplate" id="remote-create-url-template" />
-          <label class="remote-create-dialog--create-on-unknown">
+      <dialog class="shared-create-dialog" closedby="any">
+        <form id="shared-create" method="dialog">
+          <label for="shared-create-url-template">Shared Link Creation URL Template</label>
+          <input placeholder="https://example.com/new?name={{name}}&amp;url={{url}}" type="text" name="urlTemplate" id="shared-create-url-template" />
+          <label class="shared-create-dialog--create-on-unknown">
             <input type="checkbox" name="createOnUnknown" />
             Open this URL for unknown <code>go</code> links
           </label>
-          <p class="remote-create-dialog--help">
-            When creating a new remote link, this URL is opened.
+          <p class="shared-create-dialog--help">
+            When creating a new shared link, this URL is opened.
           </p>
-          <p class="remote-create-dialog--help">
+          <p class="shared-create-dialog--help">
             <code>{{name}}</code> and <code>{{url}}</code> are replaced with the URL-encoded link name and URL. Including <code>name</code> and/or <code>url</code> is optional.
           </p>
-          <p class="remote-create-dialog--help">
+          <p class="shared-create-dialog--help">
             <code>{{hasUrl:...}}</code> includes everything after the colon only when a URL is given.
           </p>
           <section class="form-footer">
-            <a href="#" class="remote-create-dialog--cancel">Cancel</a>
-            <input type="button" value="Delete" class="button remote-create-dialog--delete" />
+            <a href="#" class="shared-create-dialog--cancel">Cancel</a>
+            <input type="button" value="Delete" class="button shared-create-dialog--delete" />
             <input type="submit" value="Save" class="button" />
           </section>
         </form>
@@ -73,7 +73,7 @@
           <a href="/pages/import.html">Import</a>
           or
           <a href="/pages/export.html" class="golink-home--export">Export</a>
-          <span class="golink-home--export-remote" hidden>
+          <span class="golink-home--export-shared" hidden>
             <a href="/pages/export.html?include=all">Export All</a>
             or
             <a href="/pages/export.html">Export Personal</a>
