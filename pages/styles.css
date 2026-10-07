@@ -173,6 +173,17 @@ a:hover {
     margin-bottom: var(--1);
   }
 
+  .shared-golinks--header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--1);
+
+    label {
+      margin-bottom: 0;
+    }
+  }
+
   .shared-golinks--view {
     display: flex;
     align-items: center;

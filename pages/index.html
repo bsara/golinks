@@ -19,7 +19,16 @@
     </section>
     <section class="container">
       <form id="shared-golinks" class="shared-golinks">
-        <label for="shared-golinks-url">Shared CSV URL</label>
+        <section class="shared-golinks--header">
+          <label for="shared-golinks-url">Shared CSV URL</label>
+          <section>
+            <a href="#" class="shared-golinks--import">Import</a>
+            or
+            <a href="#" class="shared-golinks--export">Export</a>
+            settings
+            <input type="file" accept=".json,application/json" class="shared-golinks--import-file" hidden />
+          </section>
+        </section>
         <section class="shared-golinks--view" hidden>
           <a class="shared-golinks--link" target="_blank"></a>
           <a href="#" class="golink-row--action shared-golinks--reload" title="Reload shared golinks" aria-label="Reload shared golinks"></a>

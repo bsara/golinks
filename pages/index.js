@@ -2,6 +2,8 @@ const EDIT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24
 const RELOAD_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-refresh-cw"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
 const DELETE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
 
+const SHARED_SETTINGS_KEYS = ["sharedGolinksURL", "sharedGolinksSkipHeader", "sharedGolinksCreateURLTemplate", "sharedGolinksCreateOnUnknown"];
+
 document.addEventListener('DOMContentLoaded', function () {
     const table = document.querySelector('.golink-table tbody');
     const siteFooter = document.querySelector('.site-footer');
@@ -26,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const sharedCreateDeleteButton = sharedCreateForm.querySelector('.shared-create-dialog--delete');
     const exportLink = document.querySelector('.golink-home--export');
     const exportSharedLinks = document.querySelector('.golink-home--export-shared');
+    const sharedImportLink = sharedForm.querySelector('.shared-golinks--import');
+    const sharedImportFileInput = sharedForm.querySelector('.shared-golinks--import-file');
+    const sharedExportLink = sharedForm.querySelector('.shared-golinks--export');
     const filterInput = document.querySelector('.golink-table--filter');
     let savedSharedURL = '';
 
@@ -295,6 +300,59 @@ document.addEventListener('DOMContentLoaded', function () {
             sharedGolinksCreateOnUnknown: sharedCreateOnUnknownCheckbox.checked,
         });
         sharedCreateDialog.close();
+    });
+
+    sharedExportLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const settings = await chrome.storage.local.get(SHARED_SETTINGS_KEYS);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' }));
+        downloadLink.download = 'golinks-shared-settings.json';
+        downloadLink.click();
+    });
+
+    sharedImportLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        sharedImportFileInput.click();
+    });
+
+    // Replaces all shared settings; keys missing from the file are removed
+    sharedImportFileInput.addEventListener('change', async () => {
+        const [file] = sharedImportFileInput.files;
+        sharedImportFileInput.value = '';
+        if (!file) {
+            return;
+        }
+        let settings;
+        try {
+            settings = JSON.parse(await file.text());
+        } catch (error) {
+            alert(`Invalid settings file: ${error.message}`);
+            return;
+        }
+        const { sharedGolinksURL, sharedGolinksSkipHeader, sharedGolinksCreateURLTemplate, sharedGolinksCreateOnUnknown } = settings ?? {};
+        if (typeof sharedGolinksURL !== 'string' || !__helpers.isValidURL(sharedGolinksURL)) {
+            alert('Invalid settings file: sharedGolinksURL must be a valid URL');
+            return;
+        }
+        if (sharedGolinksCreateURLTemplate !== undefined
+            && (typeof sharedGolinksCreateURLTemplate !== 'string' || !__helpers.isValidURL(__helpers.fillURLTemplate(sharedGolinksCreateURLTemplate, 'name', 'https://example.com')))) {
+            alert('Invalid settings file: sharedGolinksCreateURLTemplate must be a valid URL template');
+            return;
+        }
+        if (!confirm(`Replace shared settings with '${sharedGolinksURL}'?`)) {
+            return;
+        }
+        await chrome.storage.local.remove(SHARED_SETTINGS_KEYS);
+        await chrome.storage.local.set({
+            sharedGolinksURL,
+            sharedGolinksSkipHeader: Boolean(sharedGolinksSkipHeader),
+            ...(sharedGolinksCreateURLTemplate && {
+                sharedGolinksCreateURLTemplate,
+                sharedGolinksCreateOnUnknown: Boolean(sharedGolinksCreateOnUnknown),
+            }),
+        });
+        initSharedForm();
     });
 
     chrome.storage.onChanged.addListener((changes, areaName) => {
