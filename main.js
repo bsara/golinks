@@ -29,7 +29,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
-  if (areaName !== "local" || !changes.remoteGolinksURL) {
+  if (areaName !== "local") {
+    return;
+  }
+  if (changes.remoteGolinksSkipHeader && !changes.remoteGolinksURL) {
+    return refreshRemoteGolinks();
+  }
+  if (!changes.remoteGolinksURL) {
     return;
   }
   // Drops the previous URL's golinks so they don't linger if the new URL fails
@@ -182,17 +188,20 @@ function navigate(url, disposition) {
 
 // Failed fetches keep the cached remote golinks and record the error for the options page
 async function refreshRemoteGolinks() {
-  const { remoteGolinksURL } = await chrome.storage.local.get("remoteGolinksURL");
+  const { remoteGolinksURL, remoteGolinksSkipHeader = false } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksSkipHeader"]);
   if (!remoteGolinksURL) {
     return;
   }
 
   try {
-    const response = await fetch(remoteGolinksURL);
+    // Credentials are only sent with host permission; without it CORS applies, and servers that
+    // allow any origin ("*") reject credentialed requests
+    const hasHostPermission = await chrome.permissions.contains(__helpers.toHostPermission(remoteGolinksURL));
+    const response = await fetch(remoteGolinksURL, { credentials: hasHostPermission ? "include" : "same-origin" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const remoteGolinks = __helpers.parseGolinksCSV(await response.text());
+    const remoteGolinks = __helpers.parseGolinksCSV(await response.text(), remoteGolinksSkipHeader);
     await chrome.storage.local.set({ remoteGolinks });
     await chrome.storage.local.remove("remoteGolinksError");
   } catch (error) {

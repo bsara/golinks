@@ -18,7 +18,15 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Invalid URL. Protocol required (http:// or https://)');
             return;
         }
-        const { golinks } = await chrome.storage.local.get("golinks");
+        const { golinks, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
+        if (Object.hasOwn(golinks || {}, name)) {
+            alert(`A personal link named '${name}' already exists: ${golinks[name]}`);
+            return;
+        }
+        if (Object.hasOwn(remoteGolinks, name)
+            && !confirm(`A remote link named '${name}' already exists: ${remoteGolinks[name]}\n\nCreating this personal link will override it. Continue?`)) {
+            return;
+        }
         const newGolinks = { ...golinks, [name]: url };
 
         await chrome.storage.local.set({ golinks: newGolinks });

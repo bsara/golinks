@@ -21,10 +21,21 @@ if (globalThis.__helpers === undefined) {
         sanitizeGolinkName: function(name) {
             return name.trim().toLowerCase();
         },
+        // A match pattern with no port matches every port. Google Sheets redirects to
+        // googleusercontent.com, which needs its own permission or the redirected fetch hits CORS.
+        toHostPermission: function(url) {
+            const { protocol, hostname } = new URL(url);
+            const origins = [`${protocol}//${hostname}/*`];
+            if (hostname === 'docs.google.com') {
+                origins.push('https://*.googleusercontent.com/*');
+            }
+            return { origins };
+        },
         // Each line is "name,url"; invalid lines are skipped
-        parseGolinksCSV: function(csv) {
+        parseGolinksCSV: function(csv, skipFirstLine = false) {
             const golinks = {};
-            for (const line of csv.split(/\r?\n/)) {
+            const lines = csv.split(/\r?\n/);
+            for (const line of skipFirstLine ? lines.slice(1) : lines) {
                 const [name, url] = line.split(',');
                 const sanitizedName = globalThis.__helpers.sanitizeGolinkName(name);
                 if (!globalThis.__helpers.isValidGolinkName(sanitizedName) || !globalThis.__helpers.isValidURL(url)) {

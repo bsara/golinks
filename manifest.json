@@ -18,6 +18,10 @@
     "alarms",
     "storage"
   ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "options_page": "./pages/index.html",
   "omnibox": {
     "keyword": "go"

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const remoteDeleteLink = remoteForm.querySelector('.remote-golinks--delete');
     const remoteInputSection = remoteForm.querySelector('.remote-golinks--input');
     const remoteCancelLink = remoteForm.querySelector('.remote-golinks--cancel');
+    const remoteSkipHeaderCheckbox = remoteForm.querySelector('input[name="skipHeader"]');
     let savedRemoteURL = '';
     
     async function rerenderTable() {
@@ -133,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function renderRemoteStatus() {
         const { remoteGolinksURL, remoteGolinks, remoteGolinksError } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinks", "remoteGolinksError"]);
+        remoteStatus.classList.toggle('remote-golinks--status-error', Boolean(remoteGolinksURL && remoteGolinksError));
         if (!remoteGolinksURL) {
             remoteStatus.textContent = '';
         } else if (remoteGolinksError) {
@@ -143,6 +145,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const remoteGolinkCount = Object.keys(remoteGolinks).length;
             remoteStatus.textContent = `${remoteGolinkCount} remote link${remoteGolinkCount === 1 ? '' : 's'} loaded.`;
         }
+    }
+
+    // Must be called before any other await in a click or submit handler; Chrome only shows the
+    // prompt during a user action. A denied request still lets the fetch try without the permission.
+    function requestHostPermission(url) {
+        return chrome.permissions.request(__helpers.toHostPermission(url)).catch(() => false);
     }
 
     function renderRemoteForm(isEditing) {
@@ -156,8 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function initRemoteForm() {
-        const { remoteGolinksURL = '' } = await chrome.storage.local.get("remoteGolinksURL");
+        const { remoteGolinksURL = '', remoteGolinksSkipHeader = false } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksSkipHeader"]);
         savedRemoteURL = remoteGolinksURL;
+        remoteSkipHeaderCheckbox.checked = remoteGolinksSkipHeader;
         remoteReloadLink.innerHTML = RELOAD_ICON;
         remoteEditLink.innerHTML = EDIT_ICON;
         remoteDeleteLink.innerHTML = DELETE_ICON;
@@ -167,10 +176,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     remoteReloadLink.addEventListener('click', async (e) => {
         e.preventDefault();
+        await requestHostPermission(savedRemoteURL);
+        remoteStatus.classList.remove('remote-golinks--status-error');
         remoteStatus.textContent = 'Reloading remote golinks...';
         await chrome.runtime.sendMessage({ type: 'refreshRemoteGolinks' });
         // Unchanged remote golinks don't fire storage.onChanged, so the status is refreshed here
         renderRemoteStatus();
+    });
+
+    remoteSkipHeaderCheckbox.addEventListener('change', () => {
+        chrome.storage.local.set({ remoteGolinksSkipHeader: remoteSkipHeaderCheckbox.checked });
     });
 
     remoteEditLink.addEventListener('click', (e) => {
@@ -208,6 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Invalid URL. Protocol required (http:// or https://)');
             return;
         }
+        await requestHostPermission(url);
         // Saving the same URL again leaves storage unchanged, so no refresh is triggered
         await chrome.storage.local.set({ remoteGolinksURL: url });
         savedRemoteURL = url;
