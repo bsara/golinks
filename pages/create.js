@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData(form);
         const name = __helpers.sanitizeGolinkName(formData.get('name'));
         if (!__helpers.isValidGolinkName(name)) {
-            alert('Name cannot be empty and may only contain alphanumerics or slashes');
+            alert('Name cannot be empty');
             return;
         }
         const url = __helpers.defaultToHTTPS(formData.get('url'));

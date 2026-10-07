@@ -163,6 +163,79 @@ a:hover {
   padding: 0 var(--4);
 }
 
+.remote-golinks {
+  margin-bottom: var(--8);
+
+  label {
+    display: block;
+    margin-bottom: var(--1);
+  }
+
+  .remote-golinks--view {
+    display: flex;
+    align-items: center;
+    gap: var(--2);
+    word-break: break-all;
+    padding: var(--3) var(--5);
+    border: 1px solid var(--stone-200);
+    border-bottom-width: 2px;
+    border-radius: var(--2);
+    background: var(--white);
+
+    .remote-golinks--link {
+      flex: 1;
+    }
+
+    .golink-row--action {
+      display: flex;
+    }
+  }
+
+  .remote-golinks--input {
+    display: flex;
+    align-items: center;
+    gap: var(--2);
+  }
+
+  .remote-golinks--status {
+    margin: var(--1) 0 0 0;
+    color: var(--stone-500);
+  }
+
+  /* The display: flex rules above beat the browser's [hidden] style; this must stay after them */
+  [hidden] {
+    display: none;
+  }
+}
+
+.golink-row--overridden {
+  background: var(--stone-100);
+  font-style: italic;
+  color: var(--stone-400);
+
+  a {
+    color: inherit;
+  }
+}
+
+.golink-row--remote {
+  color: var(--stone-400);
+}
+
+.golink-home--create {
+  display: flex;
+  align-items: center;
+  gap: var(--3);
+}
+
+.golink-home--count {
+  color: var(--stone-500);
+}
+
+.golink-table--footer {
+  text-align: right;
+}
+
 .golink-home--actions {
   display: flex;
   align-items: center;

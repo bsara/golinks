@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width">
     <meta name="google" content="notranslate">
     <script src="./index.js"></script>
+    <script src="../helpers/helpers.js"></script>
   </head>
   <body>
     <section class="container">
@@ -14,12 +15,29 @@
           <img src="../images/icon.svg" width="28"/>
           <h1>golinks</h1>
         </a>
-        <p>/ index</p>
       </section>
     </section>
     <section class="container">
+      <form id="remote-golinks" class="remote-golinks">
+        <label for="remote-golinks-url">Remote CSV URL</label>
+        <section class="remote-golinks--view" hidden>
+          <a class="remote-golinks--link" target="_blank"></a>
+          <a href="#" class="golink-row--action remote-golinks--reload" title="Reload remote golinks" aria-label="Reload remote golinks"></a>
+          <a href="#" class="golink-row--action remote-golinks--edit" title="Edit remote CSV URL" aria-label="Edit remote CSV URL"></a>
+          <a href="#" class="golink-row--action remote-golinks--delete" title="Delete remote CSV URL" aria-label="Delete remote CSV URL"></a>
+        </section>
+        <section class="remote-golinks--input">
+          <input placeholder="https://example.com/golinks.csv" type="text" name="url" id="remote-golinks-url" />
+          <input type="submit" value="Save" class="button" />
+          <a href="#" class="remote-golinks--cancel" hidden>Cancel</a>
+        </section>
+        <p class="remote-golinks--status"></p>
+      </form>
       <section class="golink-home--actions">
-        <a class="button" href="/pages/create.html">Create</a>
+        <section class="golink-home--create">
+          <a class="button" href="/pages/create.html">Create Personal Link</a>
+          <span class="golink-home--count"></span>
+        </section>
         <section>
           <a href="/pages/import.html">Import</a>
           or

@@ -15,6 +15,7 @@
     "type": "module"
   },
   "permissions": [
+    "alarms",
     "storage"
   ],
   "options_page": "./pages/index.html",

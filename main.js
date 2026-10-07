@@ -1,16 +1,50 @@
+import "./helpers/helpers.js";
+
 const GOLINKS_TEMPLATE = { "gh": "https://github.com" };
 const INDEX_GOLINK_NAME = "links";
-const INVALID_GOLINK_NAME_CHARS = /[^a-zA-Z0-9/]/g;
+const REMOTE_REFRESH_ALARM = "refreshRemoteGolinks";
+const REMOTE_REFRESH_MINUTES = 60;
 const TRAILING_SLASHES = /\/+$/;
 const XML_SPECIAL_CHARS = /[&<>"']/g;
 
 chrome.runtime.onInstalled.addListener(async () => {
+  startRemoteRefresh();
   const { golinks } = await chrome.storage.local.get("golinks");
   if (golinks) {
     return;
   }
   await chrome.storage.local.set({ golinks: GOLINKS_TEMPLATE });
   await chrome.tabs.update({ url: '/pages/help.html' });
+});
+
+
+chrome.runtime.onStartup.addListener(() => startRemoteRefresh());
+
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === REMOTE_REFRESH_ALARM) {
+    refreshRemoteGolinks();
+  }
+});
+
+
+chrome.storage.onChanged.addListener(async (changes, areaName) => {
+  if (areaName !== "local" || !changes.remoteGolinksURL) {
+    return;
+  }
+  // Drops the previous URL's golinks so they don't linger if the new URL fails
+  await chrome.storage.local.remove(["remoteGolinks", "remoteGolinksError"]);
+  refreshRemoteGolinks();
+});
+
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== "refreshRemoteGolinks") {
+    return;
+  }
+  refreshRemoteGolinks().then(() => sendResponse());
+  // Keeps the message channel open until sendResponse is called
+  return true;
 });
 
 
@@ -21,8 +55,8 @@ chrome.omnibox.onInputStarted.addListener(() => {
 
 
 chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
-  const query = toGolinkName(text);
-  const { golinks = {} } = await chrome.storage.local.get("golinks");
+  const query = __helpers.sanitizeGolinkName(text);
+  const golinks = await getGolinks();
   chrome.omnibox.setDefaultSuggestion({ description: getDefaultDescription(text, golinks) });
   const matches = Object.entries(golinks)
     .map(([name, url]) => ({ name, url, match: fuzzyMatch(query, name) }))
@@ -37,12 +71,12 @@ chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
 
 // Receives the selected suggestion's content, or the raw input when no suggestion is selected
 chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
-  const { golinks = {} } = await chrome.storage.local.get("golinks");
+  const golinks = await getGolinks();
   const url = resolveGolinkURL(text, golinks);
   if (url) {
     return navigate(url, disposition);
   }
-  const name = toGolinkName(text);
+  const name = __helpers.sanitizeGolinkName(text);
   if (!name || name === INDEX_GOLINK_NAME) {
     return navigate(chrome.runtime.getURL("pages/index.html"), disposition);
   }
@@ -98,13 +132,19 @@ function fuzzyMatch(query, name) {
   return { score, indices };
 }
 
+// Local golinks win over remote golinks with the same name
+async function getGolinks() {
+  const { golinks = {}, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
+  return { ...remoteGolinks, ...golinks };
+}
+
 function getDefaultDescription(text, golinks) {
   const url = resolveGolinkURL(text, golinks);
   if (url) {
     return describeLink(`<match>go ${escapeXML(text.trim())}</match>`, url);
   }
 
-  const name = toGolinkName(text);
+  const name = __helpers.sanitizeGolinkName(text);
   if (!name) {
     return "Open golinks index, or type to search";
   }
@@ -140,13 +180,33 @@ function navigate(url, disposition) {
   return chrome.tabs.update({ url });
 }
 
+// Failed fetches keep the cached remote golinks and record the error for the options page
+async function refreshRemoteGolinks() {
+  const { remoteGolinksURL } = await chrome.storage.local.get("remoteGolinksURL");
+  if (!remoteGolinksURL) {
+    return;
+  }
+
+  try {
+    const response = await fetch(remoteGolinksURL);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const remoteGolinks = __helpers.parseGolinksCSV(await response.text());
+    await chrome.storage.local.set({ remoteGolinks });
+    await chrome.storage.local.remove("remoteGolinksError");
+  } catch (error) {
+    await chrome.storage.local.set({ remoteGolinksError: error.message });
+  }
+}
+
 // The longest "/"-separated prefix of the input that names a golink wins. The rest of the
 // input, from its leading slash on, is appended to that golink's URL as typed.
 function resolveGolinkURL(text, golinks) {
   const segments = text.trim().split("/");
 
   for (let i = segments.length; i > 0; i--) {
-    const name = toGolinkName(segments.slice(0, i).join("/"));
+    const name = __helpers.sanitizeGolinkName(segments.slice(0, i).join("/"));
 
     if (!Object.hasOwn(golinks, name)) {
       continue;
@@ -161,9 +221,9 @@ function resolveGolinkURL(text, golinks) {
   return null;
 }
 
-// Mirrors __helpers.sanitizeGolinkName, which is unavailable in the service worker
-function toGolinkName(text) {
-  return text.trim().replace(INVALID_GOLINK_NAME_CHARS, "").toLowerCase();
+// Fires right away, then on an interval. Re-created on each start because Chrome may clear alarms on restart.
+function startRemoteRefresh() {
+  chrome.alarms.create(REMOTE_REFRESH_ALARM, { when: Date.now(), periodInMinutes: REMOTE_REFRESH_MINUTES });
 }
 
 // endregion
