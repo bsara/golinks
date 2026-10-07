@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "golinks",
-  "homepage_url": "https://github.com/bsara/golinks",
+  "name": "golinks+",
+  "homepage_url": "https://github.com/bsara/golinks-plus",
   "version": "1.0.0",
   "description": "golinks in your browser",
   "icons": {

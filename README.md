@@ -1,13 +1,13 @@
 <img src="/images/icon.png" width=80 />
 
-## golinks
+## golinks+
 
 > [!NOTE]
 > This is a fork of [jkulton/golinks](https://github.com/jkulton/golinks). Major differences from the original:
 >
 > - golinks are opened with the omnibox keyword `go` + <kbd>Space</kbd> instead of `go/` URLs, so the extension doesn't need `declarativeNetRequest` redirect rules
 > - As you type, the omnibox suggests golinks by fuzzy match and shows the URL of each
-> - Text after a slash is appended to the golink's URL (`go gh/bsara/golinks` opens `https://github.com/bsara/golinks`)
+> - Text after a slash is appended to the golink's URL (`go gh/bsara/golinks-plus` opens `https://github.com/bsara/golinks-plus`)
 > - `go links` or `go /` opens the index
 > - Shared golinks can be loaded from a CSV URL, such as a Google Sheet. Personal golinks override shared ones with the same name
 > - New shared golinks can be created through a configurable URL template, from the create page or automatically for unknown `go` links

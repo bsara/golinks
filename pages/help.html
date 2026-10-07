@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>golinks</title>
+    <title>golinks+</title>
     <link rel="stylesheet" href="./styles.css" />
     <meta name="viewport" content="width=device-width">
     <meta name="google" content="notranslate">
@@ -11,10 +11,10 @@
       <section class="logo-wrapper">
         <a href="/pages/index.html">
           <img src="../images/icon.svg" width="28"/>
-          <h1>golinks</h1>
+          <h1>golinks+</h1>
         </a>
         <p>/ help</p>
-        <a href="https://github.com/bsara/golinks" target="_blank" class="logo-wrapper--github" title="GitHub project" aria-label="GitHub project">
+        <a href="https://github.com/bsara/golinks-plus" target="_blank" class="logo-wrapper--github" title="GitHub project" aria-label="GitHub project">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
         </a>
       </section>
@@ -48,6 +48,51 @@
         </ol>
 
         <p>Only <code>{{name}}</code> is filled in. <code>{{url}}</code> is empty and <code>{{hasUrl:...}}</code> is left out.</p>
+
+        <hr />
+
+        <h2>Using a Google Sheet as a shared CSV</h2>
+
+        <p>Only the first two columns (name, URL) of the CSV are used. Other columns can hold data like a description or owner.</p>
+
+        <ol>
+          <li>In Google Sheets, select <strong>File &gt; Share &gt; Publish to web</strong>, publish the sheet as <strong>CSV</strong>, then copy the URL</li>
+          <li>On the <a href="/pages/index.html">index</a>, set the URL as the <strong>Shared CSV URL</strong>. If the sheet has a header row, select <strong>Ignore the first line (header row)</strong></li>
+        </ol>
+
+        <h3>Adding links with a Google Form</h3>
+
+        <p>A Google Form with prefilled data can be used as the shared link creation URL:</p>
+
+        <ol>
+          <li>Create a Google Form with questions titled <code>Name</code>, <code>URL</code>, and <code>Description</code>, and set it to collect email addresses</li>
+          <li>Select <strong>Get pre-filled link</strong>, enter placeholder values, then copy the link</li>
+          <li>In the link, replace the placeholder values with <code>{{name}}</code> and <code>{{url}}</code> (for example, <code>https://docs.google.com/forms/d/e/FORM_ID/viewform?usp=pp_url&amp;entry.111={{name}}{{hasUrl:&amp;entry.222={{url}}}}</code>)</li>
+          <li>Use the result as the URL template for <strong>Add Shared Link Creation</strong></li>
+        </ol>
+
+        <p>To update the sheet when the form is submitted, attach an Apps Script to the form (<strong>Extensions &gt; Apps Script</strong>), set the sheet ID, then add an <strong>On form submit</strong> trigger for the function. This sample script adds a row (name, URL, description, submitter's username), sorts the sheet by name, then deletes the form response:</p>
+        <pre>
+function updateGoLinksSheetOnFormSubmit(e) {
+  const answers = {};
+  e.response.getItemResponses().forEach(r =&gt; {
+    answers[r.getItem().getTitle()] = r.getResponse();
+  });
+
+  const file = SpreadsheetApp.openById("&lt;Google-Sheet-Id&gt;");
+  const sheet = file.getSheetById(0);
+
+  sheet.appendRow([
+    answers.Name,
+    answers.URL,
+    (answers.Description ?? ""),
+    e.response.getRespondentEmail().split('@')[0]
+  ]);
+
+  sheet.sort(1);
+
+  e.source.deleteResponse(e.response.getId());
+}</pre>
 
         <hr />
 
