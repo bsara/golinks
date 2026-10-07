@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "golinks",
   "homepage_url": "https://github.com/jkulton/golinks",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "golinks in your browser",
   "icons": {
     "16": "images/icon.png",
@@ -15,11 +15,10 @@
     "type": "module"
   },
   "permissions": [
-    "declarativeNetRequest",
     "storage"
   ],
-  "host_permissions": [
-    "*://go/*"
-  ],
-  "options_page": "./pages/index.html"
+  "options_page": "./pages/index.html",
+  "omnibox": {
+    "keyword": "go"
+  }
 }

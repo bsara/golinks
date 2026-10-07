@@ -5,4 +5,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         content += `${key},${value}\n`;
     }
     document.querySelector('pre').textContent = content;
+
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(new Blob([content], { type: 'text/csv' }));
+    downloadLink.download = 'golinks.csv';
+    downloadLink.click();
 });
