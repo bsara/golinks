@@ -26,8 +26,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const sharedCreateDeleteButton = sharedCreateForm.querySelector('.shared-create-dialog--delete');
     const exportLink = document.querySelector('.golink-home--export');
     const exportSharedLinks = document.querySelector('.golink-home--export-shared');
+    const filterInput = document.querySelector('.golink-table--filter');
     let savedSharedURL = '';
-    
+
+    function applyFilter() {
+        const query = filterInput.value.trim().toLocaleLowerCase();
+        table.querySelectorAll('.golink-row').forEach(row => {
+            const name = row.cells[0].textContent.toLocaleLowerCase();
+            const url = row.cells[1].textContent.toLocaleLowerCase();
+            row.hidden = Boolean(query) && !name.includes(query) && !url.includes(query);
+        });
+    }
+
+    filterInput.addEventListener('input', applyFilter);
+
     async function rerenderTable() {
         table.querySelectorAll('.golink-row').forEach(row => row.remove());
 
@@ -98,6 +110,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             actionsCell.appendChild(deleteLink);
         }
+
+        applyFilter();
 
         const currentGolinkCount = Object.keys(golinks || {}).length;
         if (currentGolinkCount === 0) {

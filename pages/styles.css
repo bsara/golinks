@@ -309,6 +309,10 @@ dialog {
   color: var(--stone-500);
 }
 
+.golink-table--filter {
+  margin-bottom: var(--3);
+}
+
 .golink-table--footer {
   text-align: right;
 }
