@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const remoteCreateOnUnknownCheckbox = remoteCreateForm.querySelector('input[name="createOnUnknown"]');
     const remoteCreateCancelLink = remoteCreateForm.querySelector('.remote-create-dialog--cancel');
     const remoteCreateDeleteButton = remoteCreateForm.querySelector('.remote-create-dialog--delete');
+    const exportLink = document.querySelector('.golink-home--export');
+    const exportRemoteLinks = document.querySelector('.golink-home--export-remote');
     let savedRemoteURL = '';
     
     async function rerenderTable() {
@@ -167,6 +169,8 @@ document.addEventListener('DOMContentLoaded', function () {
         remoteInputSection.hidden = showView;
         remoteCancelLink.hidden = !savedRemoteURL;
         remoteOptions.hidden = !savedRemoteURL;
+        exportLink.hidden = Boolean(savedRemoteURL);
+        exportRemoteLinks.hidden = !savedRemoteURL;
         remoteLink.href = savedRemoteURL;
         remoteLink.textContent = savedRemoteURL;
         remoteURLInput.value = savedRemoteURL;

@@ -1,7 +1,10 @@
 document.addEventListener('DOMContentLoaded', async function () {
     let content = '';
-    const { golinks } = await chrome.storage.local.get("golinks");
-    for (const [key, value] of Object.entries(golinks)) {
+    const includeRemote = new URLSearchParams(window.location.search).get('include') === 'all';
+    const { golinks = {}, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
+    // Local golinks win over remote golinks with the same name
+    const exportedGolinks = includeRemote ? { ...remoteGolinks, ...golinks } : golinks;
+    for (const [key, value] of Object.entries(exportedGolinks)) {
         content += `${key},${value}\n`;
     }
     document.querySelector('pre').textContent = content;
