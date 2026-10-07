@@ -27,9 +27,24 @@
         <p>There are two easy ways to quickly access the index:</p>
 
         <ol>
-          <li>Type <code>go links</code> (or just <code>go</code> + <strong>Space</strong>) in your browser's address bar, then press <strong>Enter</strong></li>
+          <li>Type <code>go links</code> or <code>go /</code> in your browser's address bar, then press <strong>Enter</strong></li>
           <li>Pin the extension in your browser's toolbar, then click its icon and select <strong>Options</strong></li>
         </ol>
+
+        <hr />
+
+        <h2>How to configure auto-creation of remote golinks</h2>
+
+        <p>Entering a golink name that doesn't yet exist can open your remote link creation URL instead of the create page:</p>
+
+        <ol>
+          <li>On the <a href="/pages/index.html">index</a>, set a <strong>Remote CSV URL</strong></li>
+          <li>Click <strong>Add Remote Link Creation</strong> (or <strong>Configure Remote Link Creation</strong>)</li>
+          <li>Enter a URL template, using <code>{{name}}</code> where the link name goes</li>
+          <li>Select <strong>Open this URL for unknown <code>go</code> links</strong>, then click <strong>Save</strong></li>
+        </ol>
+
+        <p>Only <code>{{name}}</code> is filled in. <code>{{url}}</code> is empty and <code>{{hasUrl:...}}</code> is left out.</p>
 
         <hr />
 

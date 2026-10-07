@@ -166,7 +166,7 @@ a:hover {
 }
 
 .remote-golinks {
-  margin-bottom: var(--8);
+  margin-bottom: calc(var(--spacing) * 12);
 
   label {
     display: block;
@@ -199,11 +199,18 @@ a:hover {
     gap: var(--2);
   }
 
+  .remote-golinks--options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: var(--2) 0 0 0;
+  }
+
   .remote-golinks--skip-header {
     display: flex;
     align-items: center;
     gap: var(--2);
-    margin: var(--2) 0 0 0;
+    margin: 0;
     font-weight: normal;
   }
 
@@ -217,6 +224,60 @@ a:hover {
   }
 
   /* The display: flex rules above beat the browser's [hidden] style; this must stay after them */
+  [hidden] {
+    display: none;
+  }
+}
+
+.remote-create-dialog {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20vh;
+  padding: var(--6);
+  border: 1px solid var(--stone-200);
+  border-radius: var(--2);
+  background: var(--white);
+
+  label {
+    display: block;
+    margin-bottom: var(--1);
+  }
+
+  .remote-create-dialog--delete {
+    color: var(--white);
+    background-color: var(--red-600);
+    border-color: var(--red-600);
+
+    &:hover {
+      background-color: var(--red-600);
+      filter: brightness(0.9);
+    }
+  }
+
+  .remote-create-dialog--create-on-unknown {
+    display: flex;
+    align-items: center;
+    gap: var(--2);
+    margin-top: var(--2);
+    font-weight: normal;
+  }
+
+  .remote-create-dialog--help {
+    color: var(--stone-500);
+
+    &, * {
+      font-size: 13px;
+    }
+  }
+
+  code {
+    background: var(--stone-100);
+    padding: 0 var(--1);
+    border-radius: var(--1);
+    font-family: monospace;
+  }
+
+  /* .button sets display, which beats the browser's [hidden] style */
   [hidden] {
     display: none;
   }
@@ -324,6 +385,10 @@ input.input-attached {
   cursor: pointer;
   &:hover {
     background-color: var(--stone-50);
+  }
+  &:disabled {
+    color: var(--stone-400);
+    background-color: var(--stone-100);
   }
 }
 

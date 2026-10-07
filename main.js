@@ -1,7 +1,7 @@
 import "./helpers/helpers.js";
 
 const GOLINKS_TEMPLATE = { "gh": "https://github.com" };
-const INDEX_GOLINK_NAME = "links";
+const INDEX_GOLINK_NAMES = ["links", "/"];
 const REMOTE_REFRESH_ALARM = "refreshRemoteGolinks";
 const REMOTE_REFRESH_MINUTES = 60;
 const TRAILING_SLASHES = /\/+$/;
@@ -83,10 +83,11 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
     return navigate(url, disposition);
   }
   const name = __helpers.sanitizeGolinkName(text);
-  if (!name || name === INDEX_GOLINK_NAME) {
+  if (!name || INDEX_GOLINK_NAMES.includes(name)) {
     return navigate(chrome.runtime.getURL("pages/index.html"), disposition);
   }
-  return navigate(chrome.runtime.getURL(`pages/create.html?name=${encodeURIComponent(name)}`), disposition);
+  const remoteCreateURL = await getRemoteCreateURL(name);
+  return navigate(remoteCreateURL || chrome.runtime.getURL(`pages/create.html?name=${encodeURIComponent(name)}`), disposition);
 });
 
 
@@ -144,6 +145,15 @@ async function getGolinks() {
   return { ...remoteGolinks, ...golinks };
 }
 
+// Matches the create page, which only allows remote link creation when a remote CSV URL is also set
+async function getRemoteCreateURL(name) {
+  const { remoteGolinksURL, remoteGolinksCreateURLTemplate, remoteGolinksCreateOnUnknown } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksCreateURLTemplate", "remoteGolinksCreateOnUnknown"]);
+  if (!remoteGolinksURL || !remoteGolinksCreateURLTemplate || !remoteGolinksCreateOnUnknown) {
+    return null;
+  }
+  return __helpers.fillURLTemplate(remoteGolinksCreateURLTemplate, name, '');
+}
+
 function getDefaultDescription(text, golinks) {
   const url = resolveGolinkURL(text, golinks);
   if (url) {
@@ -154,7 +164,7 @@ function getDefaultDescription(text, golinks) {
   if (!name) {
     return "Open golinks index, or type to search";
   }
-  if (name === INDEX_GOLINK_NAME) {
+  if (INDEX_GOLINK_NAMES.includes(name)) {
     return "Open golinks index";
   }
 

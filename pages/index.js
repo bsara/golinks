@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const remoteInputSection = remoteForm.querySelector('.remote-golinks--input');
     const remoteCancelLink = remoteForm.querySelector('.remote-golinks--cancel');
     const remoteSkipHeaderCheckbox = remoteForm.querySelector('input[name="skipHeader"]');
+    const remoteOptions = remoteForm.querySelector('.remote-golinks--options');
+    const remoteConfigureCreateButton = remoteForm.querySelector('.remote-golinks--configure-create');
+    const remoteCreateDialog = document.querySelector('.remote-create-dialog');
+    const remoteCreateForm = remoteCreateDialog.querySelector('form#remote-create');
+    const remoteCreateURLTemplateInput = remoteCreateForm.querySelector('input[name="urlTemplate"]');
+    const remoteCreateOnUnknownCheckbox = remoteCreateForm.querySelector('input[name="createOnUnknown"]');
+    const remoteCreateCancelLink = remoteCreateForm.querySelector('.remote-create-dialog--cancel');
+    const remoteCreateDeleteButton = remoteCreateForm.querySelector('.remote-create-dialog--delete');
     let savedRemoteURL = '';
     
     async function rerenderTable() {
@@ -158,9 +166,15 @@ document.addEventListener('DOMContentLoaded', function () {
         remoteView.hidden = !showView;
         remoteInputSection.hidden = showView;
         remoteCancelLink.hidden = !savedRemoteURL;
+        remoteOptions.hidden = !savedRemoteURL;
         remoteLink.href = savedRemoteURL;
         remoteLink.textContent = savedRemoteURL;
         remoteURLInput.value = savedRemoteURL;
+    }
+
+    async function renderRemoteConfigureCreateButton() {
+        const { remoteGolinksCreateURLTemplate } = await chrome.storage.local.get("remoteGolinksCreateURLTemplate");
+        remoteConfigureCreateButton.value = `${remoteGolinksCreateURLTemplate ? 'Configure' : 'Add'} Remote Link Creation`;
     }
 
     async function initRemoteForm() {
@@ -172,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
         remoteDeleteLink.innerHTML = DELETE_ICON;
         renderRemoteForm(false);
         renderRemoteStatus();
+        renderRemoteConfigureCreateButton();
     }
 
     remoteReloadLink.addEventListener('click', async (e) => {
@@ -230,6 +245,41 @@ document.addEventListener('DOMContentLoaded', function () {
         renderRemoteForm(false);
     });
 
+    remoteConfigureCreateButton.addEventListener('click', async () => {
+        const { remoteGolinksCreateURLTemplate = '', remoteGolinksCreateOnUnknown = false } = await chrome.storage.local.get(["remoteGolinksCreateURLTemplate", "remoteGolinksCreateOnUnknown"]);
+        remoteCreateURLTemplateInput.value = remoteGolinksCreateURLTemplate;
+        remoteCreateOnUnknownCheckbox.checked = remoteGolinksCreateOnUnknown;
+        remoteCreateDeleteButton.hidden = !remoteGolinksCreateURLTemplate;
+        remoteCreateDialog.showModal();
+    });
+
+    remoteCreateCancelLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        remoteCreateDialog.close();
+    });
+
+    remoteCreateDeleteButton.addEventListener('click', async () => {
+        if (!confirm('Delete remote link creation URL?')) {
+            return;
+        }
+        await chrome.storage.local.remove(["remoteGolinksCreateURLTemplate", "remoteGolinksCreateOnUnknown"]);
+        remoteCreateDialog.close();
+    });
+
+    remoteCreateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const urlTemplate = __helpers.defaultToHTTPS(remoteCreateURLTemplateInput.value.trim());
+        if (!__helpers.isValidURL(__helpers.fillURLTemplate(urlTemplate, 'name', 'https://example.com'))) {
+            alert('Invalid URL. Protocol required (http:// or https://)');
+            return;
+        }
+        await chrome.storage.local.set({
+            remoteGolinksCreateURLTemplate: urlTemplate,
+            remoteGolinksCreateOnUnknown: remoteCreateOnUnknownCheckbox.checked,
+        });
+        remoteCreateDialog.close();
+    });
+
     chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== 'local') {
             return;
@@ -239,6 +289,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (changes.remoteGolinksURL || changes.remoteGolinks || changes.remoteGolinksError) {
             renderRemoteStatus();
+        }
+        if (changes.remoteGolinksCreateURLTemplate) {
+            renderRemoteConfigureCreateButton();
         }
     });
 

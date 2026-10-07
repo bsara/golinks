@@ -2,22 +2,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.querySelector('form#create-edit');
     const nameInput = document.querySelector('input[name="name"]');
     const urlInput = document.querySelector('input[name="url"]');
+    const createRemoteButton = document.querySelector('#create-remote');
     
-    async function submitForm(e) {
-        e.preventDefault();
-        e.target.disabled = true;
+    // Alerts and returns null when the form is invalid
+    function getValidatedFormValues({ isURLRequired = true } = {}) {
         const formData = new FormData(form);
         const name = __helpers.sanitizeGolinkName(formData.get('name'));
         if (!__helpers.isValidGolinkName(name)) {
             alert('Name cannot be empty');
-            return;
+            return null;
         }
-        const url = __helpers.defaultToHTTPS(formData.get('url'));
+        const rawURL = formData.get('url').trim();
+        if (!rawURL && !isURLRequired) {
+            return { name, url: '' };
+        }
+        const url = __helpers.defaultToHTTPS(rawURL);
         // Lightweight validation
         if (!__helpers.isValidURL(url)) {
             alert('Invalid URL. Protocol required (http:// or https://)');
+            return null;
+        }
+        return { name, url };
+    }
+
+    async function submitForm(e) {
+        e.preventDefault();
+        e.target.disabled = true;
+        const values = getValidatedFormValues();
+        if (!values) {
             return;
         }
+        const { name, url } = values;
         const { golinks, remoteGolinks = {} } = await chrome.storage.local.get(["golinks", "remoteGolinks"]);
         if (Object.hasOwn(golinks || {}, name)) {
             alert(`A personal link named '${name}' already exists: ${golinks[name]}`);
@@ -47,6 +62,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    async function initCreateRemoteButton() {
+        const { remoteGolinksURL, remoteGolinksCreateURLTemplate } = await chrome.storage.local.get(["remoteGolinksURL", "remoteGolinksCreateURLTemplate"]);
+        if (!remoteGolinksURL) {
+            createRemoteButton.title = 'No remote CSV URL set';
+        } else if (!remoteGolinksCreateURLTemplate) {
+            createRemoteButton.title = 'Remote link creation not configured';
+        } else {
+            createRemoteButton.disabled = false;
+        }
+    }
+
+    async function createRemoteLink() {
+        const values = getValidatedFormValues({ isURLRequired: false });
+        if (!values) {
+            return;
+        }
+        const { remoteGolinksCreateURLTemplate } = await chrome.storage.local.get("remoteGolinksCreateURLTemplate");
+        chrome.tabs.update({ url: __helpers.fillURLTemplate(remoteGolinksCreateURLTemplate, values.name, values.url) });
+    }
+
     form.addEventListener('submit', submitForm);
+    createRemoteButton.addEventListener('click', createRemoteLink);
     initForm();
+    initCreateRemoteButton();
 });

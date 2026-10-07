@@ -31,15 +31,42 @@
           <input type="submit" value="Save" class="button" />
           <a href="#" class="remote-golinks--cancel" hidden>Cancel</a>
         </section>
-        <label class="remote-golinks--skip-header">
-          <input type="checkbox" name="skipHeader" />
-          Ignore the first line (header row)
-        </label>
+        <section class="remote-golinks--options" hidden>
+          <label class="remote-golinks--skip-header">
+            <input type="checkbox" name="skipHeader" />
+            Ignore the first line (header row)
+          </label>
+          <input type="button" value="Add Remote Link Creation" class="button remote-golinks--configure-create" />
+        </section>
         <p class="remote-golinks--status"></p>
       </form>
+      <dialog class="remote-create-dialog" closedby="any">
+        <form id="remote-create" method="dialog">
+          <label for="remote-create-url-template">Remote Link Creation URL Template</label>
+          <input placeholder="https://example.com/new?name={{name}}&amp;url={{url}}" type="text" name="urlTemplate" id="remote-create-url-template" />
+          <label class="remote-create-dialog--create-on-unknown">
+            <input type="checkbox" name="createOnUnknown" />
+            Open this URL for unknown <code>go</code> links
+          </label>
+          <p class="remote-create-dialog--help">
+            When creating a new remote link, this URL is opened.
+          </p>
+          <p class="remote-create-dialog--help">
+            <code>{{name}}</code> and <code>{{url}}</code> are replaced with the URL-encoded link name and URL. Including <code>name</code> and/or <code>url</code> is optional.
+          </p>
+          <p class="remote-create-dialog--help">
+            <code>{{hasUrl:...}}</code> includes everything after the colon only when a URL is given.
+          </p>
+          <section class="form-footer">
+            <a href="#" class="remote-create-dialog--cancel">Cancel</a>
+            <input type="button" value="Delete" class="button remote-create-dialog--delete" />
+            <input type="submit" value="Save" class="button" />
+          </section>
+        </form>
+      </dialog>
       <section class="golink-home--actions">
         <section class="golink-home--create">
-          <a class="button" href="/pages/create.html">Create Personal Link</a>
+          <a class="button" href="/pages/create.html">Create Link</a>
           <span class="golink-home--count"></span>
         </section>
         <section>

@@ -31,6 +31,13 @@ if (globalThis.__helpers === undefined) {
             }
             return { origins };
         },
+        // "{{hasUrl:...}}" keeps its content (which may contain other placeholders) only when url is non-empty
+        fillURLTemplate: function(template, name, url) {
+            return template
+                .replace(/\{\{hasUrl:((?:\{\{(?:name|url)\}\}|(?!\}\}).)*)\}\}/g, url ? '$1' : '')
+                .replaceAll('{{name}}', encodeURIComponent(name))
+                .replaceAll('{{url}}', encodeURIComponent(url));
+        },
         // Each line is "name,url"; invalid lines are skipped
         parseGolinksCSV: function(csv, skipFirstLine = false) {
             const golinks = {};
