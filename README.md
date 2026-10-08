@@ -77,3 +77,11 @@ On the create page, click **Create Shared Link** to open the filled-in URL. The 
 <img src="/images/screenshot-create-shared-link.png" />
 
 Select **Open this URL for unknown `go` links** to open the template URL, instead of the create page, when you enter a name that doesn't exist. This also needs a shared CSV URL to be set. Only `{{name}}` is filled in.
+
+### Managed settings
+
+Administrators can set the shared settings through Chrome enterprise policy. The extension reads them from [`storage.managed`](https://developer.chrome.com/docs/extensions/reference/api/storage#property-managed). See `managed_schema.json` for the keys.
+
+A setting set by policy can't be changed on the index page. Settings import and export are hidden while any setting is set by policy. If the policy value is removed, the last value stays and you can change it again. `sharedGolinksCreateOnUnknown` is an exception: its policy value is only a default, used when you haven't set it yourself.
+
+If the shared CSV needs you to be signed in, click the reload icon next to the URL to give the extension access to the site.

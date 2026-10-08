@@ -22,6 +22,9 @@
     "http://*/*",
     "https://*/*"
   ],
+  "storage": {
+    "managed_schema": "managed_schema.json"
+  },
   "options_page": "./pages/index.html",
   "omnibox": {
     "keyword": "go"

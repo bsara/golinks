@@ -26,13 +26,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const sharedCreateOnUnknownCheckbox = sharedCreateForm.querySelector('input[name="createOnUnknown"]');
     const sharedCreateCancelLink = sharedCreateForm.querySelector('.shared-create-dialog--cancel');
     const sharedCreateDeleteButton = sharedCreateForm.querySelector('.shared-create-dialog--delete');
+    const sharedManagedNote = sharedForm.querySelector('.shared-golinks--managed');
     const exportLink = document.querySelector('.golink-home--export');
     const exportSharedLinks = document.querySelector('.golink-home--export-shared');
+    const sharedSettingsLinks = sharedForm.querySelector('.shared-golinks--settings');
     const sharedImportLink = sharedForm.querySelector('.shared-golinks--import');
     const sharedImportFileInput = sharedForm.querySelector('.shared-golinks--import-file');
     const sharedExportLink = sharedForm.querySelector('.shared-golinks--export');
     const filterInput = document.querySelector('.golink-table--filter');
     let savedSharedURL = '';
+    // Keys locked by enterprise policy; the background worker copies their values into local storage
+    let managedKeys = new Set();
 
     function applyFilter() {
         const query = filterInput.value.trim().toLocaleLowerCase();
@@ -186,6 +190,12 @@ document.addEventListener('DOMContentLoaded', function () {
         sharedView.hidden = !showView;
         sharedInputSection.hidden = showView;
         sharedCancelLink.hidden = !savedSharedURL;
+        sharedView.classList.toggle('shared-golinks--view-managed', managedKeys.has('sharedGolinksURL'));
+        sharedEditLink.hidden = managedKeys.has('sharedGolinksURL');
+        sharedDeleteLink.hidden = managedKeys.has('sharedGolinksURL');
+        sharedSkipHeaderCheckbox.disabled = managedKeys.has('sharedGolinksSkipHeader');
+        sharedSettingsLinks.hidden = managedKeys.size > 0;
+        sharedManagedNote.hidden = managedKeys.size === 0;
         sharedConfigureCreateButton.hidden = !savedSharedURL;
         exportLink.hidden = Boolean(savedSharedURL);
         exportSharedLinks.hidden = !savedSharedURL;
@@ -200,6 +210,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function initSharedForm() {
+        // The policy value for opening the creation URL on unknown links is only a default, so it stays editable
+        const { sharedGolinksCreateOnUnknown, ...managed } = await chrome.storage.managed.get(null);
+        managedKeys = new Set(Object.keys(managed));
         const { sharedGolinksURL = '', sharedGolinksSkipHeader = false } = await chrome.storage.local.get(["sharedGolinksURL", "sharedGolinksSkipHeader"]);
         savedSharedURL = sharedGolinksURL;
         sharedSkipHeaderCheckbox.checked = sharedGolinksSkipHeader;
@@ -271,7 +284,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const { sharedGolinksCreateURLTemplate = '', sharedGolinksCreateOnUnknown = false } = await chrome.storage.local.get(["sharedGolinksCreateURLTemplate", "sharedGolinksCreateOnUnknown"]);
         sharedCreateURLTemplateInput.value = sharedGolinksCreateURLTemplate;
         sharedCreateOnUnknownCheckbox.checked = sharedGolinksCreateOnUnknown;
-        sharedCreateDeleteButton.hidden = !sharedGolinksCreateURLTemplate;
+        const isTemplateManaged = managedKeys.has('sharedGolinksCreateURLTemplate');
+        sharedCreateURLTemplateInput.disabled = isTemplateManaged;
+        sharedCreateDeleteButton.hidden = !sharedGolinksCreateURLTemplate || isTemplateManaged;
         sharedCreateDialog.showModal();
     });
 
@@ -356,8 +371,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'managed') {
+            initSharedForm();
+            return;
+        }
         if (areaName !== 'local') {
             return;
+        }
+        // Catches values the background worker copies in from policy
+        if (SHARED_SETTINGS_KEYS.some(key => changes[key])) {
+            initSharedForm();
         }
         if (changes.sharedGolinks) {
             rerenderTable();

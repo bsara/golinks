@@ -24,13 +24,14 @@
       <form id="shared-golinks" class="shared-golinks">
         <section class="shared-golinks--header">
           <label for="shared-golinks-url">Shared CSV URL</label>
-          <section>
+          <section class="shared-golinks--settings">
             <a href="#" class="shared-golinks--import">Import</a>
             or
             <a href="#" class="shared-golinks--export">Export</a>
             settings
             <input type="file" accept=".json,application/json" class="shared-golinks--import-file" hidden />
           </section>
+          <p class="shared-golinks--managed" hidden>Some settings are managed by your organization</p>
         </section>
         <section class="shared-golinks--view" hidden>
           <a class="shared-golinks--link" target="_blank"></a>

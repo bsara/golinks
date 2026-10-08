@@ -209,9 +209,13 @@ a:hover {
       flex: 1;
     }
 
-    .golink-row--action {
+    .golink-row--action:not([hidden]) {
       display: flex;
     }
+  }
+
+  .shared-golinks--view-managed {
+    background: var(--stone-100);
   }
 
   .shared-golinks--input {
@@ -238,6 +242,12 @@ a:hover {
   .shared-golinks--status {
     margin: var(--1) 0 0 0;
     color: var(--stone-500);
+  }
+
+  .shared-golinks--managed {
+    margin: 0;
+    color: var(--stone-500);
+    font-style: italic;
   }
 
   .shared-golinks--status-error {

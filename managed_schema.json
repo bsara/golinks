@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "sharedGolinksURL": {
+      "title": "Shared CSV URL",
+      "type": "string"
+    },
+    "sharedGolinksSkipHeader": {
+      "title": "Ignore the first line (header row) of the shared CSV",
+      "type": "boolean"
+    },
+    "sharedGolinksCreateURLTemplate": {
+      "title": "Shared link creation URL template",
+      "type": "string"
+    },
+    "sharedGolinksCreateOnUnknown": {
+      "title": "Open the shared link creation URL for unknown go links",
+      "type": "boolean"
+    }
+  }
+}

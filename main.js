@@ -8,6 +8,7 @@ const TRAILING_SLASHES = /\/+$/;
 const XML_SPECIAL_CHARS = /[&<>"']/g;
 
 chrome.runtime.onInstalled.addListener(async () => {
+  await syncManagedSettings();
   startSharedRefresh();
   const { golinks } = await chrome.storage.local.get("golinks");
   if (golinks) {
@@ -18,7 +19,10 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 
-chrome.runtime.onStartup.addListener(() => startSharedRefresh());
+chrome.runtime.onStartup.addListener(async () => {
+  await syncManagedSettings();
+  startSharedRefresh();
+});
 
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -29,6 +33,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
+  if (areaName === "managed") {
+    return syncManagedSettings();
+  }
   if (areaName !== "local") {
     return;
   }
@@ -238,6 +245,27 @@ function resolveGolinkURL(text, golinks) {
   }
 
   return null;
+}
+
+// Copies policy values over local ones; readers only use local storage. Invalid URLs are skipped.
+// A value later removed from policy stays in local storage, where the user can edit it again.
+// sharedGolinksCreateOnUnknown is only a default, used when the user has no value of their own.
+async function syncManagedSettings() {
+  const { sharedGolinksCreateOnUnknown, ...managed } = await chrome.storage.managed.get(null);
+  if (sharedGolinksCreateOnUnknown !== undefined) {
+    const local = await chrome.storage.local.get("sharedGolinksCreateOnUnknown");
+    if (local.sharedGolinksCreateOnUnknown === undefined) {
+      managed.sharedGolinksCreateOnUnknown = sharedGolinksCreateOnUnknown;
+    }
+  }
+  if (managed.sharedGolinksURL !== undefined && !__helpers.isValidURL(managed.sharedGolinksURL)) {
+    delete managed.sharedGolinksURL;
+  }
+  if (managed.sharedGolinksCreateURLTemplate !== undefined
+    && !__helpers.isValidURL(__helpers.fillURLTemplate(managed.sharedGolinksCreateURLTemplate, "name", "https://example.com"))) {
+    delete managed.sharedGolinksCreateURLTemplate;
+  }
+  await chrome.storage.local.set(managed);
 }
 
 // Fires right away, then on an interval. Re-created on each start because Chrome may clear alarms on restart.
