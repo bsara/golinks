@@ -158,6 +158,7 @@ a:hover {
     width: 32px;
   }
 
+  .logo-wrapper--help,
   .logo-wrapper--github {
     margin-left: auto;
     color: var(--black);
@@ -166,6 +167,10 @@ a:hover {
       color: var(--stone-500);
       background: initial;
     }
+  }
+
+  .logo-wrapper--help + .logo-wrapper--github {
+    margin-left: var(--2);
   }
 }
 
