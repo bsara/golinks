@@ -1,4 +1,4 @@
-<img src="/images/icon.png" width=80 />
+<img src="/images/icon.svg" width=80 />
 
 ## golinks+
 
